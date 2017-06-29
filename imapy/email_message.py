@@ -46,14 +46,14 @@ class EmailMessage(CaseInsensitiveDict):
         """Converts value to utf-8 encoding"""
         if six.PY2:
             if encoding not in ['utf-8', None]:
-                return value.decode(encoding).encode('utf-8')
+                return value.decode(encoding, 'replace').encode('utf-8')
         elif six.PY3:
             # in PY3 'decode_headers' may return both byte and unicode
             if isinstance(value, bytes):
                 if encoding in ['utf-8', None]:
                     return utils.b_to_str(value)
                 else:
-                    return value.decode(encoding)
+                    return value.decode(encoding, 'replace')
 
         return value
 
@@ -149,7 +149,10 @@ class EmailMessage(CaseInsensitiveDict):
                     # rare cases when we get decoding error
                     except AssertionError:
                         data = None
-                    attachment_fname = decode_header(part.get_filename())
+                    filename = part.get_filename()
+                    if filename is None:
+                        continue
+                    attachment_fname = decode_header(filename)
                     filename = self.clean_value(
                         attachment_fname[0][0], attachment_fname[0][1]
                     )
